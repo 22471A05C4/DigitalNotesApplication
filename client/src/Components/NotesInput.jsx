@@ -1,71 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus
-} from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus } from 'react-icons/fa';
+import axios from 'axios';
 import './NotesInput.css';
 
-const fonts = ['Arial', 'Georgia', 'Courier New', 'Verdana', 'Comic Sans MS'];
-
-const NotesInput = ({ addNote, updateNote, notes }) => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const isEdit = id !== undefined;
-
+const NoteInput = ({ addNote }) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
+  const [folder, setFolder] = useState('Personal');
   const [bgColor, setBgColor] = useState('#2c2c2c');
   const [bgImage, setBgImage] = useState('');
   const [images, setImages] = useState([]);
   const [fontFamily, setFontFamily] = useState('Arial');
-  const [folder, setFolder] = useState('home');
   const [showColors, setShowColors] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [showFonts, setShowFonts] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-
   const [history, setHistory] = useState([]);
   const [future, setFuture] = useState([]);
+  const recognitionRef = useRef(null);
+  const navigate = useNavigate();
 
-  let recognition;
+  const fonts = ['Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana'];
 
-  useEffect(() => {
-    // If editing, preload the note data
-    if (isEdit && notes && notes[id]) {
-      const noteData = notes[id];
-      setTitle(noteData.title || '');
-      setNote(noteData.note || '');
-      setBgColor(noteData.bgColor || '#2c2c2c');
-      setBgImage(noteData.bgImage || '');
-      setImages(noteData.images || []);
-      setFontFamily(noteData.font || 'Arial');
-      setFolder(noteData.folder || 'home');
+  // Create axios instance with auth headers
+  const api = axios.create({
+    baseURL: 'http://localhost:5000/api',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Add request interceptor to include auth token
+  api.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-  }, [isEdit, id, notes]);
+  );
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
-      recognition = new window.webkitSpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
+      const recog = new window.webkitSpeechRecognition();
+      recog.lang = 'en-US';
+      recog.continuous = false;
 
-      recognition.onresult = (event) => {
+      recog.onresult = (event) => {
         const speech = event.results[0][0].transcript;
         setNote(prev => prev + ' ' + speech);
       };
 
-      recognition.onerror = (e) => console.error('Speech error', e);
+      recog.onerror = (e) => console.error('Speech error', e);
+      recog.onend = () => setIsRecording(false);
+      recognitionRef.current = recog;
     }
   }, []);
 
   const toggleRecording = () => {
-    if (!recognition) return;
+    if (!recognitionRef.current) return;
     if (isRecording) {
-      recognition.stop();
+      recognitionRef.current.stop();
     } else {
-      recognition.start();
+      recognitionRef.current.start();
+      setIsRecording(true);
     }
-    setIsRecording(!isRecording);
   };
 
   const handleUndo = () => {
@@ -109,18 +113,6 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
     input.click();
   };
 
-  const handleTakePicture = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.onchange = e => {
-      const file = e.target.files[0];
-      if (file) handleAddImage(file);
-    };
-    input.click();
-  };
-
   const handleChooseFromGallery = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -132,7 +124,19 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
     input.click();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login to save notes');
+      navigate('/login');
+      return;
+    }
+
+    if (!title.trim() || !note.trim()) {
+      alert('Please enter both title and note content');
+      return;
+    }
+
     const newNote = {
       title,
       note,
@@ -143,12 +147,33 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
       bgImage,
       images
     };
-    if (isEdit) {
-      updateNote(Number(id), newNote);
-    } else {
-      addNote(newNote);
+
+    try {
+      const res = await api.post('/notes', newNote);
+      addNote(res.data); // Pass the response data to parent component (MainContent)
+      
+      // Clear the form
+      setTitle('');
+      setNote('');
+      setImages([]);
+      setBgImage('');
+      setBgColor('#2c2c2c');
+      setFontFamily('Arial');
+      setFolder('Personal');
+      
+      alert('Note saved successfully!');
+      navigate('/main'); // Navigate to MainContent to see the saved note
+    } catch (error) {
+      console.error('Error saving note:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        alert('Session expired. Please login again.');
+        navigate('/login');
+      } else {
+        alert('Error saving note. Please try again.');
+      }
     }
-    navigate('/main');
   };
 
   return (
@@ -158,7 +183,8 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
         style={{
           background: bgImage ? `url(${bgImage}) center/cover no-repeat` : bgColor,
           fontFamily
-        }}>
+        }}
+      >
         <div className="toolbar">
           <FaCheck className="icon save" onClick={handleSave} title="Save" />
           <FaUndo className="icon" onClick={handleUndo} title="Undo" />
@@ -179,26 +205,10 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
           className="note-text"
         />
 
-        {/* Show added images */}
         <div className="note-images">
           {images.map((url, idx) => (
             <img src={url} key={idx} alt="note-img" />
           ))}
-        </div>
-
-        <div className="folder-buttons">
-          <button
-            className={folder === 'home' ? 'active' : ''}
-            onClick={() => setFolder('home')}
-          >Home</button>
-          <button
-            className={folder === 'personal' ? 'active' : ''}
-            onClick={() => setFolder('personal')}
-          >Personal</button>
-          <button
-            className={folder === 'work' ? 'active' : ''}
-            onClick={() => setFolder('work')}
-          >Work</button>
         </div>
 
         <div className="bottom-toolbar">
@@ -217,8 +227,14 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
             setShowColors(false);
             setShowGallery(false);
           }} />
-          <FaMicrophone onClick={toggleRecording} style={{ color: isRecording ? 'red' : '#fff' }} />
+          <FaMicrophone onClick={toggleRecording} style={{ color: isRecording ? 'red' : 'white' }} />
         </div>
+
+        <select value={folder} onChange={e => setFolder(e.target.value)} className="folder-select">
+          <option value="Personal">Personal</option>
+          <option value="Work">Work</option>
+          <option value="Important">Important</option>
+        </select>
 
         {showColors && (
           <div className="color-options">
@@ -231,7 +247,6 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
 
         {showGallery && (
           <div className="gallery-options">
-            <button onClick={handleTakePicture}>📷 Take Picture</button>
             <button onClick={handleChooseFromGallery}>🖼 Choose from Gallery</button>
           </div>
         )}
@@ -248,4 +263,4 @@ const NotesInput = ({ addNote, updateNote, notes }) => {
   );
 };
 
-export default NotesInput;
+export default NoteInput;
