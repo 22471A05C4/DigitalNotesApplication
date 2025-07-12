@@ -31,7 +31,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(user));
   
       alert('Login successful!');
-      navigate('/'); // 👈 Redirect to Dashboard
+      navigate('/main'); // 👈 Redirect to Dashboard
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Login failed. Please try again.';
       alert(errorMessage);
@@ -39,7 +39,14 @@ const Login = () => {
   };
   
   return (
-    <div className="auth-container">
+    <div className="auth-container" style={{
+      background: 'linear-gradient(135deg, #a8edea, #fed6e3)',
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
       <div className="auth-box">
         <h2>Login</h2>
         <form onSubmit={handleLogin}>

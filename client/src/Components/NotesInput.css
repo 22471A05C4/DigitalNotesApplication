@@ -1,0 +1,163 @@
+.note-input-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .note-card {
+    width: 90%;
+    max-width: 800px;
+    height: 90%;
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  
+  .icon {
+    cursor: pointer;
+    font-size: 1.4em;
+  }
+  
+  .white {
+    color: white;
+  }
+  
+  .note-title, .note-text {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: none;
+    color: white;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+  }
+  
+  .note-text {
+    flex: 1;
+    resize: none;
+  }
+  
+  .note-folder-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  .note-folder-buttons button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background 0.2s;
+  }
+  
+  .note-folder-buttons .active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+  
+  
+  
+  .bottom-toolbar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 1.4em;
+  }
+  
+  .color-options, .gallery-options, .font-options {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .color-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+  }
+  
+  .add-bg {
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #fff;
+  }
+  
+  .gallery-options button, .font-options button {
+    background: rgba(25,118,210,0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  
+  .note-images img {
+    max-width: 100%;
+    margin-top: 8px;
+    border-radius: 6px;
+  }
+  /* 📝 Notes Grid - 5 per row */
+.home-notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* 5 per row if space allows */
+    gap: 16px;
+    justify-items: center;
+    margin-top: 20px;
+  }
+  
+  /* 🗒️ Note Card */
+  .home-note-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 12px 16px;
+    width: 200px; /* fixed width for 5 per row */
+    min-height: 120px;
+    text-align: left;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .home-note-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  }
+  .home-note-title {
+    /* Fallback for older browsers */
+    max-height: 2.4em; /* 2 lines × 1.2em line-height */
+    line-height: 1.2em;
+    
+    /* Modern approach */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+  
