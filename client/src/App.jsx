@@ -170,7 +170,13 @@ function App() {
           />
         } />
         
-        <Route path="/edit/:id" element={<NotesInput addNote={addNote} updateNote={updateNote} notes={notes} />} />
+        <Route path="/edit/:id" element={
+          <NotesInput 
+            addNote={addNote} 
+            updateNote={updateNote} 
+            notes={notes} 
+          />
+        } />
         <Route path="/signup" element={<SignUp/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/dashboard" element={<Dashboard/>} />

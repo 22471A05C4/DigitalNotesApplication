@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus } from 'react-icons/fa';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus, FaDownload, FaFileImport, FaHeart, FaRegHeart } from 'react-icons/fa';
 import axios from 'axios';
 import './NotesInput.css';
 
-const NoteInput = ({ addNote }) => {
+const NoteInput = ({ addNote, updateNote, notes }) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [folder, setFolder] = useState('Personal');
@@ -15,11 +15,17 @@ const NoteInput = ({ addNote }) => {
   const [showColors, setShowColors] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [showFonts, setShowFonts] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [history, setHistory] = useState([]);
   const [future, setFuture] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
   const recognitionRef = useRef(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { id } = useParams(); // Get note ID from URL for edit mode
 
   const fonts = ['Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana'];
 
@@ -44,6 +50,28 @@ const NoteInput = ({ addNote }) => {
       return Promise.reject(error);
     }
   );
+
+  // Check if we're in edit mode and load existing note data
+  useEffect(() => {
+    if (id && notes) {
+      const noteToEdit = notes.find(note => note._id === id);
+      if (noteToEdit) {
+        setTitle(noteToEdit.title || '');
+        setNote(noteToEdit.note || '');
+        setFolder(noteToEdit.folder || 'Personal');
+        setBgColor(noteToEdit.bgColor || '#2c2c2c');
+        setBgImage(noteToEdit.bgImage || '');
+        setImages(noteToEdit.images || []);
+        setFontFamily(noteToEdit.font || 'Arial');
+        setIsFavorite(noteToEdit.favorite || false);
+        console.log('Loaded note for editing:', noteToEdit);
+      } else {
+        console.error('Note not found for editing');
+        alert('Note not found');
+        navigate('/main');
+      }
+    }
+  }, [id, notes, navigate]);
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -147,6 +175,93 @@ const NoteInput = ({ addNote }) => {
     setFolder(selectedTag);
   };
 
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+  };
+
+  // Import functionality
+  const handleFileImport = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target.result;
+        
+        if (file.name.endsWith('.json')) {
+          const jsonData = JSON.parse(content);
+          if (Array.isArray(jsonData)) {
+            // Multiple notes
+            jsonData.forEach(noteData => {
+              if (noteData.title && noteData.content) {
+                setTitle(noteData.title);
+                setNote(noteData.content);
+                setFolder(noteData.folder || 'Personal');
+                if (noteData.bgColor) setBgColor(noteData.bgColor);
+                if (noteData.font) setFontFamily(noteData.font);
+                if (noteData.favorite) setIsFavorite(noteData.favorite);
+              }
+            });
+          } else {
+            // Single note
+            if (jsonData.title && jsonData.content) {
+              setTitle(jsonData.title);
+              setNote(jsonData.content);
+              setFolder(jsonData.folder || 'Personal');
+              if (jsonData.bgColor) setBgColor(jsonData.bgColor);
+              if (jsonData.font) setFontFamily(jsonData.font);
+              if (jsonData.favorite) setIsFavorite(jsonData.favorite);
+            }
+          }
+        } else if (file.name.endsWith('.txt')) {
+          // Plain text file
+          const lines = content.split('\n');
+          if (lines.length > 0) {
+            setTitle(lines[0] || 'Imported Note');
+            setNote(lines.slice(1).join('\n'));
+          }
+        } else if (file.name.endsWith('.csv')) {
+          // CSV file
+          const lines = content.split('\n');
+          if (lines.length > 1) {
+            const headers = lines[0].split(',');
+            const data = lines[1].split(',');
+            const titleIndex = headers.findIndex(h => h.toLowerCase().includes('title'));
+            const contentIndex = headers.findIndex(h => h.toLowerCase().includes('content') || h.toLowerCase().includes('note'));
+            
+            if (titleIndex !== -1 && contentIndex !== -1) {
+              setTitle(data[titleIndex] || 'Imported Note');
+              setNote(data[contentIndex] || '');
+            }
+          }
+        }
+        
+        alert('File imported successfully!');
+      } catch (error) {
+        console.error('Error importing file:', error);
+        alert('Error importing file. Please check the file format.');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const handleTextImport = () => {
+    if (importText.trim()) {
+      const lines = importText.split('\n');
+      if (lines.length > 0) {
+        setTitle(lines[0] || 'Imported Note');
+        setNote(lines.slice(1).join('\n'));
+        setImportText('');
+        setShowImport(false);
+        alert('Text imported successfully!');
+      }
+    } else {
+      alert('Please enter some text to import.');
+    }
+  };
+
   const handleSave = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -160,26 +275,41 @@ const NoteInput = ({ addNote }) => {
       return;
     }
 
-    console.log('Selected folder/tag:', folder);
+    setIsLoading(true);
 
-    const newNote = {
+    const noteData = {
       title,
-      content: note, // Backend expects 'content' not 'note'
+      note: note,
       date: new Date().toLocaleDateString(),
-      tags: [folder], // Backend expects 'tags' array, not 'folder'
+      folder: folder,
       font: fontFamily,
       bgColor,
       bgImage,
-      images 
+      images,
+      favorite: isFavorite
     };
 
-    console.log('Saving note with tag:', newNote);
-
     try {
-      const res = await api.post('/notes', newNote);
-      console.log('Note saved successfully with tag:', res.data);
-      addNote(res.data); // Pass the response data from server
-      alert(`Note saved successfully in ${folder} category!`);
+      if (id) {
+        // Edit mode - update existing note
+        console.log('Updating note with ID:', id);
+        const res = await api.put(`/notes/${id}`, noteData);
+        console.log('Note updated successfully:', res.data);
+        if (updateNote) {
+          updateNote(res.data);
+        }
+        alert(`Note updated successfully in ${folder} category!`);
+      } else {
+        // Create mode - add new note
+        console.log('Creating new note');
+        const res = await api.post('/notes', noteData);
+        console.log('Note created successfully:', res.data);
+        if (addNote) {
+          addNote(res.data);
+        }
+        alert(`Note saved successfully in ${folder} category!`);
+      }
+      
       navigate('/main');
     } catch (error) {
       console.error('Error saving note:', error);
@@ -191,11 +321,19 @@ const NoteInput = ({ addNote }) => {
       } else {
         alert('Error saving note. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="note-input-container">
+      {/* Mode indicator */}
+      <div className="mode-indicator">
+        <h2>{id ? '✏️ Edit Note' : '📝 Create New Note'}</h2>
+        {id && <p className="edit-mode-info">You're editing an existing note</p>}
+      </div>
+
       <div
         className="note-card"
         style={{
@@ -204,10 +342,42 @@ const NoteInput = ({ addNote }) => {
         }}
       >
         <div className="toolbar">
-          <FaCheck className="icon save" onClick={handleSave} title="Save" />
+          <button 
+            className={`save-button ${isLoading ? 'loading' : ''}`}
+            onClick={handleSave}
+            disabled={isLoading}
+            title={id ? "Update Note" : "Save Note"}
+          >
+            {isLoading ? (
+              <span className="loading-spinner">⏳</span>
+            ) : (
+              <FaCheck className="icon save" />
+            )}
+            {id ? 'Update' : 'Save'}
+          </button>
           <FaUndo className="icon" onClick={handleUndo} title="Undo" />
           <FaRedo className="icon" onClick={handleRedo} title="Redo" />
+          <button 
+            className={`favorite-button ${isFavorite ? 'favorited' : ''}`}
+            onClick={toggleFavorite}
+            title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          >
+            {isFavorite ? <FaHeart className="icon heart-filled" /> : <FaRegHeart className="icon heart-outline" />}
+          </button>
+          <FaFileImport 
+            className="icon import-icon" 
+            onClick={() => setShowImport(!showImport)} 
+            title="Import Note" 
+          />
         </div>
+
+        {/* Favorite indicator */}
+        {isFavorite && (
+          <div className="favorite-indicator">
+            <FaHeart className="favorite-star" />
+            <span className="favorite-text">FAVORITE</span>
+          </div>
+        )}
 
         <input
           placeholder="Title"
@@ -234,16 +404,19 @@ const NoteInput = ({ addNote }) => {
             setShowColors(!showColors);
             setShowGallery(false);
             setShowFonts(false);
+            setShowImport(false);
           }} />
           <FaImage onClick={() => {
             setShowGallery(!showGallery);
             setShowColors(false);
             setShowFonts(false);
+            setShowImport(false);
           }} />
           <FaFont onClick={() => {
             setShowFonts(!showFonts);
             setShowColors(false);
             setShowGallery(false);
+            setShowImport(false);
           }} />
           <FaMicrophone onClick={toggleRecording} style={{ color: isRecording ? 'red' : 'white' }} />
         </div>
@@ -251,17 +424,71 @@ const NoteInput = ({ addNote }) => {
         <select value={folder} onChange={handleTagChange} className="folder-select">
           <option value="Personal">📁 Personal</option>
           <option value="Work">💼 Work</option>
-          <option value="Important">⭐ Important</option>
+          <option value="Important" className="important-option">⭐ Important</option>
         </select>
 
         {/* Tag indicator */}
         <div className="selected-tag-indicator">
-          <span className="tag-badge">
+          <span className={`tag-badge ${folder === 'Important' ? 'important-badge' : ''}`}>
             {folder === 'Personal' && '📁 Personal'}
             {folder === 'Work' && '💼 Work'}
             {folder === 'Important' && '⭐ Important'}
           </span>
         </div>
+
+        {/* Import Modal */}
+        {showImport && (
+          <div className="import-modal">
+            <div className="import-content">
+              <h3>📥 Import Note</h3>
+              
+              {/* File Import */}
+              <div className="import-section">
+                <h4>📁 Import from File</h4>
+                <p>Supported formats: JSON, TXT, CSV</p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileImport}
+                  accept=".json,.txt,.csv"
+                  style={{ display: 'none' }}
+                />
+                <button 
+                  className="import-file-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  📁 Choose File
+                </button>
+              </div>
+
+              {/* Text Import */}
+              <div className="import-section">
+                <h4>📝 Import from Text</h4>
+                <p>First line will be the title, rest will be the content</p>
+                <textarea
+                  placeholder="Enter your text here...&#10;First line = title&#10;Rest = content"
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  className="import-textarea"
+                  rows="6"
+                />
+                <button 
+                  className="import-text-btn"
+                  onClick={handleTextImport}
+                >
+                  📝 Import Text
+                </button>
+              </div>
+
+              <button 
+                className="close-import-btn"
+                onClick={() => setShowImport(false)}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+        )}
 
         {showColors && (
           <div className="color-options">
