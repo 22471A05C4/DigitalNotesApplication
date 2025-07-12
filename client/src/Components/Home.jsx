@@ -19,7 +19,7 @@ const HomePage = () => {
           <button
             onClick={() => navigate("/login")}
             className="button login"
-          >
+          >  
             Login
           </button>
           <button

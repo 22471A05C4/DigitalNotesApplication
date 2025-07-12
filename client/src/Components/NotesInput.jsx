@@ -170,7 +170,7 @@ const NoteInput = ({ addNote }) => {
       font: fontFamily,
       bgColor,
       bgImage,
-      images
+      images 
     };
 
     console.log('Saving note with tag:', newNote);

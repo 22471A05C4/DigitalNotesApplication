@@ -177,3 +177,4 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
 };
 
 export default MainContent;
+   

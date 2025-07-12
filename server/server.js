@@ -8,7 +8,7 @@ const noteRoutes = require('./routes/NotesRoutes');
 
 
 const app = express();
-connectDB();
+connectDB(); 
 
 app.use(cors());
 app.use(express.json());

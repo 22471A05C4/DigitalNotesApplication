@@ -44,7 +44,7 @@ function App() {
   // Debug: Log when notes state changes
   useEffect(() => {
     console.log('App.jsx: Notes state updated:', notes);
-  }, [notes]);
+  }, [notes]); 
 
   const fetchNotes = async () => {
     try {

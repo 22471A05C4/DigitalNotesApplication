@@ -31,7 +31,7 @@ const updateNote = async (req, res) => {
 
 // Delete note
 const deleteNote = async (req, res) => {
-    try {
+    try { 
         const note = await Note.findByIdAndDelete(req.params.id);
 
         if (!note) {

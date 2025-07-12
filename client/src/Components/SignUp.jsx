@@ -74,7 +74,7 @@ const Signup = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-          />
+          />  
           <button type="submit">Sign Up</button>
           <div className="switch-link">
             Already have an account? <Link to="/login">Login</Link>
