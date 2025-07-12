@@ -41,6 +41,11 @@ function App() {
     }
   }, []);
 
+  // Debug: Log when notes state changes
+  useEffect(() => {
+    console.log('App.jsx: Notes state updated:', notes);
+  }, [notes]);
+
   const fetchNotes = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -71,8 +76,13 @@ function App() {
       }
 
       const res = await api.post('/notes', note);
+      console.log('App.jsx: Note saved to backend:', res.data);
       // Add the new note to the beginning of the list
-      setNotes(prevNotes => [res.data, ...prevNotes]);
+      setNotes(prevNotes => {
+        const newNotes = [res.data, ...prevNotes];
+        console.log('App.jsx: Updated notes state:', newNotes);
+        return newNotes;
+      });
     } catch (error) {
       console.error('Error adding note:', error);
       if (error.response?.status === 401) {
@@ -146,22 +156,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/new" element={
-          <div className="App">
-            <NotesInput addNote={addNote} />
-            <div className="note-list">
-              {notes.map(note => (
-                <div key={note._id} className="note-item" style={{ background: note.bgColor }}>
-                  <h3>{note.title}</h3>
-                  <p>{note.note}</p>
-                  <button onClick={() => copyToClipboard(note.note)}>Copy</button>
-                  <button onClick={() => shareNote(note)}>Share</button>
-                  <button onClick={() => deleteNote(note._id)}>Delete</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        } />
+        <Route path="/new" element={<NotesInput addNote={addNote} />} />
         <Route path="/main" element={
           <MainContent
             notes={notes}

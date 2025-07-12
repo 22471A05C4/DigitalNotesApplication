@@ -83,6 +83,35 @@
   transform: translateY(-2px);
 }
 
+.home-folder-btn.active {
+  background-color: #007bff;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* Active Tag Display */
+.active-tag-display {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.active-tag-badge {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-right: 10px;
+}
+
+.note-count {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
 /* 📝 Notes Grid */
 .home-notes-grid {
   display: flex;
@@ -96,7 +125,7 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 16px;
   min-width: 150px;
   max-width: 200px;
   flex: 1 1 calc(25% - 20px);
@@ -104,6 +133,9 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .home-note-card:hover {
@@ -125,6 +157,51 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 📁 Folder Indicator */
+.note-folder-indicator {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+/* 📝 Note Content Display */
+.home-note-content {
+  margin-top: 10px;
+  padding: 8px 0;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Scrollbar for note content */
+.home-note-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.home-note-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.home-note-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+}
+
+.home-note-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 /* ⋮ Options Dropdown */
@@ -203,19 +280,53 @@
 }
 .view-more-btn {
   margin-top: 10px;
-  background-color: #ffffffaa;
+  background-color: #007bff;
+  color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
 }
 
 .view-more-btn:hover {
-  background-color: #ffffffcc;
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
 }
 
-.home-folder-btn.active {
-  background-color: #007bff;
-  color: #fff;
+.view-more-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* View Content Button */
+.view-content-btn {
+  margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.view-content-btn:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.view-content-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
 }

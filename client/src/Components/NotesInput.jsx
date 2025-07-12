@@ -62,6 +62,11 @@ const NoteInput = ({ addNote }) => {
     }
   }, []);
 
+  // Debug: Log when folder/tag changes
+  useEffect(() => {
+    console.log('Current selected tag:', folder);
+  }, [folder]);
+
   const toggleRecording = () => {
     if (!recognitionRef.current) return;
     if (isRecording) {
@@ -113,6 +118,18 @@ const NoteInput = ({ addNote }) => {
     input.click();
   };
 
+  const handleTakePicture = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (file) handleAddImage(file);
+    };
+    input.click();
+  };
+
   const handleChooseFromGallery = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -122,6 +139,12 @@ const NoteInput = ({ addNote }) => {
       if (file) handleAddImage(file);
     };
     input.click();
+  };
+
+  const handleTagChange = (e) => {
+    const selectedTag = e.target.value;
+    console.log('Tag changed to:', selectedTag);
+    setFolder(selectedTag);
   };
 
   const handleSave = async () => {
@@ -137,32 +160,27 @@ const NoteInput = ({ addNote }) => {
       return;
     }
 
+    console.log('Selected folder/tag:', folder);
+
     const newNote = {
       title,
-      note,
+      content: note, // Backend expects 'content' not 'note'
       date: new Date().toLocaleDateString(),
-      folder,
+      tags: [folder], // Backend expects 'tags' array, not 'folder'
       font: fontFamily,
       bgColor,
       bgImage,
       images
     };
 
+    console.log('Saving note with tag:', newNote);
+
     try {
       const res = await api.post('/notes', newNote);
-      addNote(res.data); // Pass the response data to parent component (MainContent)
-      
-      // Clear the form
-      setTitle('');
-      setNote('');
-      setImages([]);
-      setBgImage('');
-      setBgColor('#2c2c2c');
-      setFontFamily('Arial');
-      setFolder('Personal');
-      
-      alert('Note saved successfully!');
-      navigate('/main'); // Navigate to MainContent to see the saved note
+      console.log('Note saved successfully with tag:', res.data);
+      addNote(res.data); // Pass the response data from server
+      alert(`Note saved successfully in ${folder} category!`);
+      navigate('/main');
     } catch (error) {
       console.error('Error saving note:', error);
       if (error.response?.status === 401) {
@@ -230,11 +248,20 @@ const NoteInput = ({ addNote }) => {
           <FaMicrophone onClick={toggleRecording} style={{ color: isRecording ? 'red' : 'white' }} />
         </div>
 
-        <select value={folder} onChange={e => setFolder(e.target.value)} className="folder-select">
-          <option value="Personal">Personal</option>
-          <option value="Work">Work</option>
-          <option value="Important">Important</option>
+        <select value={folder} onChange={handleTagChange} className="folder-select">
+          <option value="Personal">📁 Personal</option>
+          <option value="Work">💼 Work</option>
+          <option value="Important">⭐ Important</option>
         </select>
+
+        {/* Tag indicator */}
+        <div className="selected-tag-indicator">
+          <span className="tag-badge">
+            {folder === 'Personal' && '📁 Personal'}
+            {folder === 'Work' && '💼 Work'}
+            {folder === 'Important' && '⭐ Important'}
+          </span>
+        </div>
 
         {showColors && (
           <div className="color-options">
@@ -247,6 +274,7 @@ const NoteInput = ({ addNote }) => {
 
         {showGallery && (
           <div className="gallery-options">
+            
             <button onClick={handleChooseFromGallery}>🖼 Choose from Gallery</button>
           </div>
         )}
