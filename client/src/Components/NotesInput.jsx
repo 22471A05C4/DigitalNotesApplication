@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus, FaDownload, FaFileImport, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaCheck, FaUndo, FaRedo, FaPalette, FaImage, FaFont, FaMicrophone, FaPlus, FaDownload, FaFileImport, FaHeart, FaRegHeart, FaUser, FaSignOutAlt, FaCog } from 'react-icons/fa';
 import axios from 'axios';
 import './NotesInput.css';
 
@@ -22,8 +22,11 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [importText, setImportText] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [user, setUser] = useState(null);
   const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
+  const profileMenuRef = useRef(null);
   const navigate = useNavigate();
   const { id } = useParams(); // Get note ID from URL for edit mode
 
@@ -50,6 +53,39 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
       return Promise.reject(error);
     }
   );
+
+  // Load user data on component mount
+  useEffect(() => {
+    const loadUserData = () => {
+      const username = localStorage.getItem('username');
+      const email = localStorage.getItem('email');
+      const userId = localStorage.getItem('userId');
+      
+      if (username && email && userId) {
+        setUser({
+          username,
+          email,
+          id: userId
+        });
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Check if we're in edit mode and load existing note data
   useEffect(() => {
@@ -94,6 +130,26 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
   useEffect(() => {
     console.log('Current selected tag:', folder);
   }, [folder]);
+
+  const toggleProfileMenu = () => {
+    setShowProfileMenu(!showProfileMenu);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    navigate('/login');
+  };
+
+  const handleNavigateToDashboard = () => {
+    navigate('/dashboard');
+  };
+
+  const handleNavigateToHome = () => {
+    navigate('/home');
+  };
 
   const toggleRecording = () => {
     if (!recognitionRef.current) return;
@@ -326,12 +382,31 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
     }
   };
 
+  // Generate user initials for avatar
+  const getUserInitials = () => {
+    if (!user?.username) return '?';
+    return user.username
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="note-input-container">
       {/* Mode indicator */}
       <div className="mode-indicator">
         <h2>{id ? '✏️ Edit Note' : '📝 Create New Note'}</h2>
         {id && <p className="edit-mode-info">You're editing an existing note</p>}
+        {/* User Welcome Message */}
+        {user && (
+          <div className="user-welcome">
+            <span className="welcome-text">Welcome back, </span>
+            <span className="username-display">{user.username}</span>
+            <span className="welcome-emoji">👋</span>
+          </div>
+        )}
       </div>
 
       <div
@@ -342,33 +417,86 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
         }}
       >
         <div className="toolbar">
-          <button 
-            className={`save-button ${isLoading ? 'loading' : ''}`}
-            onClick={handleSave}
-            disabled={isLoading}
-            title={id ? "Update Note" : "Save Note"}
-          >
-            {isLoading ? (
-              <span className="loading-spinner">⏳</span>
-            ) : (
-              <FaCheck className="icon save" />
-            )}
-            {id ? 'Update' : 'Save'}
-          </button>
-          <FaUndo className="icon" onClick={handleUndo} title="Undo" />
-          <FaRedo className="icon" onClick={handleRedo} title="Redo" />
-          <button 
-            className={`favorite-button ${isFavorite ? 'favorited' : ''}`}
-            onClick={toggleFavorite}
-            title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-          >
-            {isFavorite ? <FaHeart className="icon heart-filled" /> : <FaRegHeart className="icon heart-outline" />}
-          </button>
-          <FaFileImport 
-            className="icon import-icon" 
-            onClick={() => setShowImport(!showImport)} 
-            title="Import Note" 
-          />
+          <div className="toolbar-left">
+            {/* User Profile */}
+            <div className="user-profile" ref={profileMenuRef}>
+              <button 
+                className="profile-avatar"
+                onClick={toggleProfileMenu}
+                title="Click to view profile"
+              >
+                <span className="avatar-text">{getUserInitials()}</span>
+              </button>
+              
+              {showProfileMenu && (
+                <div className="profile-menu">
+                  <div className="profile-header">
+                    <div className="profile-avatar-large">
+                      <span className="avatar-text">{getUserInitials()}</span>
+                    </div>
+                    <div className="profile-info">
+                      <h4 className="profile-name">{user?.username || 'User'}</h4>
+                      <p className="profile-email">{user?.email || 'user@example.com'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="profile-actions">
+                    <button 
+                      className="profile-action-btn"
+                      onClick={handleNavigateToDashboard}
+                    >
+                      <FaCog className="action-icon" />
+                      Dashboard
+                    </button>
+                    <button 
+                      className="profile-action-btn"
+                      onClick={handleNavigateToHome}
+                    >
+                      <FaUser className="action-icon" />
+                      All Notes
+                    </button>
+                    <button 
+                      className="profile-action-btn logout-btn"
+                      onClick={handleLogout}
+                    >
+                      <FaSignOutAlt className="action-icon" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="toolbar-right">
+            <button 
+              className={`save-button ${isLoading ? 'loading' : ''}`}
+              onClick={handleSave}
+              disabled={isLoading}
+              title={id ? "Update Note" : "Save Note"}
+            >
+              {isLoading ? (
+                <span className="loading-spinner">⏳</span>
+              ) : (
+                <FaCheck className="icon save" />
+              )}
+              {id ? 'Update' : 'Save'}
+            </button>
+            <FaUndo className="icon" onClick={handleUndo} title="Undo" />
+            <FaRedo className="icon" onClick={handleRedo} title="Redo" />
+            <button 
+              className={`favorite-button ${isFavorite ? 'favorited' : ''}`}
+              onClick={toggleFavorite}
+              title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              {isFavorite ? <FaHeart className="icon heart-filled" /> : <FaRegHeart className="icon heart-outline" />}
+            </button>
+            <FaFileImport 
+              className="icon import-icon" 
+              onClick={() => setShowImport(!showImport)} 
+              title="Import Note" 
+            />
+          </div>
         </div>
 
         {/* Favorite indicator */}
