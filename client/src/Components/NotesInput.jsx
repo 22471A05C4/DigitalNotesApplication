@@ -8,7 +8,7 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [folder, setFolder] = useState('Personal');
-  const [bgColor, setBgColor] = useState('#2c2c2c');
+  const [bgColor, setBgColor] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
   const [bgImage, setBgImage] = useState('');
   const [images, setImages] = useState([]);
   const [fontFamily, setFontFamily] = useState('Arial');
@@ -95,7 +95,7 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
         setTitle(noteToEdit.title || '');
         setNote(noteToEdit.note || '');
         setFolder(noteToEdit.folder || 'Personal');
-        setBgColor(noteToEdit.bgColor || '#2c2c2c');
+        setBgColor(noteToEdit.bgColor || '	#E0BBE4');
         setBgImage(noteToEdit.bgImage || '');
         setImages(noteToEdit.images || []);
         setFontFamily(noteToEdit.font || 'Arial');
@@ -512,6 +512,7 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
           value={title}
           onChange={handleChange(setTitle)}
           className="note-title"
+          style={{ fontFamily }}
         />
 
         <textarea
@@ -519,6 +520,7 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
           value={note}
           onChange={handleChange(setNote)}
           className="note-text"
+          style={{ fontFamily }}
         />
 
         <div className="note-images">
@@ -620,8 +622,20 @@ const NoteInput = ({ addNote, updateNote, notes }) => {
 
         {showColors && (
           <div className="color-options">
-            {['#2c2c2c', '#1976d2', '#4caf50', '#ff9800'].map(c => (
-              <div key={c} className="color-dot" style={{ background: c }} onClick={() => { setBgColor(c); setBgImage(''); }} />
+            {[
+              'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+              'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+            ].map((gradient, index) => (
+              <div 
+                key={index} 
+                className="color-dot" 
+                style={{ background: gradient }} 
+                onClick={() => { setBgColor(gradient); setBgImage(''); }} 
+              />
             ))}
             <FaPlus onClick={handleAddCustomBg} className="add-bg" />
           </div>

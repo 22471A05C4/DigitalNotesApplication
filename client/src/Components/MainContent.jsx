@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaUserCircle, FaBars, FaEllipsisV, FaStar, FaTrash, FaEdit, FaCopy, FaSearch, FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaPlus, FaUserCircle, FaEllipsisV, FaStar, FaTrash, FaEdit, FaCopy, FaSearch, FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import './MainContent.css';
 
 const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
@@ -105,11 +105,21 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
   // Filter notes based on active folder and search query
   const filteredNotes = notes.filter((note) => {
     const noteFolder = getNoteFolder(note);
-    const matchesFolder = activeFolder === 'All' || 
-                         activeFolder === 'Favorites' ? note.favorite : 
-                         noteFolder === activeFolder;
+    
+    // Handle folder filtering
+    let matchesFolder = false;
+    if (activeFolder === 'All') {
+      matchesFolder = true; // Show all notes
+    } else if (activeFolder === 'Favorites') {
+      matchesFolder = note.favorite || false; // Show only favorite notes
+    } else {
+      matchesFolder = noteFolder === activeFolder; // Show notes matching the selected folder
+    }
+    
+    // Handle search filtering
     const matchesSearch = searchQuery === '' || 
       note.title.toLowerCase().includes(searchQuery.toLowerCase());
+    
     return matchesFolder && matchesSearch;
   });
 
@@ -122,16 +132,8 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
   return (
     <div className="home">
       <div className="home-header">
-        <FaBars className="home-toggle" />
         <span className="home-title">Notes</span>
-        <div className="header-actions">
-          <FaDownload 
-            className="export-icon" 
-            onClick={handleBulkExport}
-            title="Export All Notes"
-          />
-          <FaUserCircle className="home-profile" />
-        </div>
+       
       </div>
 
       {/* Search Bar */}

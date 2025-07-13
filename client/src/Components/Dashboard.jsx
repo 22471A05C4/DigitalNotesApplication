@@ -30,7 +30,11 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        setNotes(notesResponse.data.notes || []);
+        setNotes(notesResponse.data || []);
+        
+        // Debug: Log the notes data
+        console.log('Dashboard: Notes response:', notesResponse.data);
+        console.log('Dashboard: Notes array:', notesResponse.data || []);
         
         // Set user data from localStorage or create a basic user object
         const userData = {
@@ -70,7 +74,7 @@ const Dashboard = () => {
   };
 
   const handleNavigateToCreate = () => {
-    navigate('/main');
+    navigate('/new');
   };
 
   // Calculate statistics
@@ -78,6 +82,12 @@ const Dashboard = () => {
   const importantNotes = notes.filter(note => note.folder === 'Important').length;
   const favoriteNotes = notes.filter(note => note.favorite).length;
   const recentNotes = notes.slice(0, 3); // Get last 3 notes
+  
+  // Debug: Log statistics
+  console.log('Dashboard: Total notes:', totalNotes);
+  console.log('Dashboard: Important notes:', importantNotes);
+  console.log('Dashboard: Favorite notes:', favoriteNotes);
+  console.log('Dashboard: Notes array for debugging:', notes);
 
   if (loading) {
     return (

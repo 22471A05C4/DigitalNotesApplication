@@ -161,9 +161,21 @@ function App() {
           <MainContent
             notes={notes}
             onDelete={deleteNote}
-            onEdit={(idx) => {
-              const noteToEdit = notes[idx];
-              // Handle edit navigation here
+            onEdit={(id) => {
+              // Navigate to edit page with the note ID
+              window.location.href = `/edit/${id}`;
+            }}
+            onUpdate={updateNote}
+            onFavorite={toggleFavorite}
+          />
+        } />
+        <Route path="/home" element={
+          <MainContent
+            notes={notes}
+            onDelete={deleteNote}
+            onEdit={(id) => {
+              // Navigate to edit page with the note ID
+              window.location.href = `/edit/${id}`;
             }}
             onUpdate={updateNote}
             onFavorite={toggleFavorite}
