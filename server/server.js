@@ -14,11 +14,12 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);  
-app.use('/api/notes', noteRoutes);
 app.get('/', (req, res) => {
   res.send('✅ NoteIt backend is running!');
 });
+app.use('/api/auth', authRoutes);  
+app.use('/api/notes', noteRoutes);
+
 
 
 const PORT = process.env.PORT || 5000;
