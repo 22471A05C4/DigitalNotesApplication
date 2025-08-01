@@ -10,7 +10,16 @@ const noteRoutes = require('./routes/NotesRoutes');
 const app = express();
 connectDB(); 
 
-app.use(cors());
+const allowedOrigins = [
+  'https://digital-notes-application.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5000'
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
