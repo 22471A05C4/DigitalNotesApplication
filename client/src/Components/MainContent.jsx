@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaUserCircle, FaEllipsisV, FaStar, FaTrash, FaEdit, FaCopy, FaSearch, FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import './MainContent.css';
@@ -8,6 +8,7 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
   const [expandedNotes, setExpandedNotes] = useState([]); // Tracks which notes are expanded
   const [activeFolder, setActiveFolder] = useState('All'); // Tracks selected folder
   const [searchQuery, setSearchQuery] = useState(''); // Tracks search query
+  const [openMenuIdx, setOpenMenuIdx] = useState(null); // Tracks which options menu is open
 
   // Debug: Log notes to see what data we're receiving
   console.log('MainContent received notes:', notes);
@@ -67,18 +68,15 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
   };
 
   const toggleExpand = (idx) => {
-    console.log('Toggling expand for note index:', idx);
     setExpandedNotes((prev) => {
       const newExpanded = prev.includes(idx) 
         ? prev.filter((i) => i !== idx) 
         : [...prev, idx];
-      console.log('New expanded notes:', newExpanded);
       return newExpanded;
     });
   };
 
   const handleFolderClick = (folder) => {
-    console.log('Folder clicked:', folder);
     setActiveFolder(folder);
   };
 
@@ -105,35 +103,34 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
   // Filter notes based on active folder and search query
   const filteredNotes = notes.filter((note) => {
     const noteFolder = getNoteFolder(note);
-    
-    // Handle folder filtering
     let matchesFolder = false;
     if (activeFolder === 'All') {
-      matchesFolder = true; // Show all notes
+      matchesFolder = true;
     } else if (activeFolder === 'Favorites') {
-      matchesFolder = note.favorite || false; // Show only favorite notes
+      matchesFolder = note.favorite || false;
     } else {
-      matchesFolder = noteFolder === activeFolder; // Show notes matching the selected folder
+      matchesFolder = noteFolder === activeFolder;
     }
-    
-    // Handle search filtering
     const matchesSearch = searchQuery === '' || 
       note.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
     return matchesFolder && matchesSearch;
   });
 
-  console.log('Active folder:', activeFolder);
-  console.log('Search query:', searchQuery);
-  console.log('All notes:', notes);
-  console.log('Filtered notes:', filteredNotes);
-  console.log('Notes with folders:', notes.map(note => ({ title: note.title, folder: note.folder })));
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.note-options')) {
+        setOpenMenuIdx(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="home">
       <div className="home-header">
         <span className="home-title">Notes</span>
-       
       </div>
 
       {/* Search Bar */}
@@ -255,20 +252,26 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
                     {note.title}
                   </div>
                   <div className="note-options">
-                    <FaEllipsisV className="options-icon" />
-                    <div className="options-menu">
-                      <button 
-                        className={`favorite-toggle ${isFavorite ? 'favorited' : ''}`}
-                        onClick={() => onFavorite(note._id || idx)}
-                        title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                      >
-                        {isFavorite ? <FaHeart className="heart-filled" /> : <FaRegHeart className="heart-outline" />}
-                      </button>
-                      <FaDownload title="Export" onClick={() => handleExportNote(note)} />
-                      <FaTrash title="Delete" onClick={() => onDelete(note._id || idx)} />
-                      <FaEdit title="Edit" onClick={() => handleEdit(note._id || idx)} />
-                      <FaCopy title="Copy" onClick={() => handleCopy(note)} />
-                    </div>
+                    <FaEllipsisV 
+                      className="options-icon" 
+                      onClick={() => setOpenMenuIdx(openMenuIdx === idx ? null : idx)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    {openMenuIdx === idx && (
+                      <div className="options-menu">
+                        <button 
+                          className={`favorite-toggle ${isFavorite ? 'favorited' : ''}`}
+                          onClick={() => { onFavorite(note._id || idx); setOpenMenuIdx(null); }}
+                          title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                        >
+                          {isFavorite ? <FaHeart className="heart-filled" /> : <FaRegHeart className="heart-outline" />}
+                        </button>
+                        <FaDownload title="Export" onClick={() => { handleExportNote(note); setOpenMenuIdx(null); }} />
+                        <FaTrash title="Delete" onClick={() => { onDelete(note._id || idx); setOpenMenuIdx(null); }} />
+                        <FaEdit title="Edit" onClick={() => { handleEdit(note._id || idx); setOpenMenuIdx(null); }} />
+                        <FaCopy title="Copy" onClick={() => { handleCopy(note); setOpenMenuIdx(null); }} />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -308,4 +311,3 @@ const MainContent = ({ notes, onDelete, onEdit, onFavorite }) => {
 };
 
 export default MainContent;
-   
